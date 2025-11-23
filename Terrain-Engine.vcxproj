@@ -152,6 +152,7 @@
     <ClInclude Include="core\Camera.h" />
     <ClInclude Include="core\GBuffer.h" />
     <ClInclude Include="core\rendering\DeferredRenderer.h" />
+    <ClInclude Include="core\rendering\InstancedMesh.h" />
     <ClInclude Include="core\rendering\PostProcessor.h" />
     <ClInclude Include="core\rendering\Primitives.h" />
     <ClInclude Include="core\rendering\SSAO.h" />

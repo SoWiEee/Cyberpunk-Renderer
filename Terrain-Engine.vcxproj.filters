@@ -74,6 +74,9 @@
     <ClInclude Include="core\rendering\SSAO.h">
       <Filter>標頭檔</Filter>
     </ClInclude>
+    <ClInclude Include="core\rendering\InstancedMesh.h">
+      <Filter>標頭檔</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Image Include="assets\textures\heightmap.jpg">
