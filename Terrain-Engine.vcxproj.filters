@@ -42,6 +42,9 @@
     <ClCompile Include="core\rendering\SSAO.cpp">
       <Filter>來源檔案</Filter>
     </ClCompile>
+    <ClCompile Include="core\rendering\InstancedMesh.cpp">
+      <Filter>來源檔案</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="core\Shader.h">
@@ -72,6 +75,9 @@
       <Filter>標頭檔</Filter>
     </ClInclude>
     <ClInclude Include="core\rendering\SSAO.h">
+      <Filter>標頭檔</Filter>
+    </ClInclude>
+    <ClInclude Include="core\rendering\InstancedMesh.h">
       <Filter>標頭檔</Filter>
     </ClInclude>
   </ItemGroup>
