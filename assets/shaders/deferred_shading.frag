@@ -5,7 +5,6 @@ layout (location = 1) out vec4 BrightColor;
 
 in vec2 TexCoords;
 
-// G-Buffer 貼圖
 uniform sampler2D gPosition;
 uniform sampler2D gNormal;
 uniform sampler2D gAlbedoSpec;
@@ -55,7 +54,29 @@ void main()
 
     lighting += Emission;
 
-    FragColor = vec4(lighting, 1.0);
+    // 賽博龐克霧氣
+    // 1. 越遠越霧
+    float dist = length(viewPos - FragPos);
+    float fogDist = 1.0 - exp(-dist * 0.015); // 調整 0.015 控制濃淡
+
+    // 2. 越低越霧
+    // 假設地面是 y=0，我們希望霧氣集中在 y=5 以下
+    float fogHeight = 1.0 - smoothstep(0.0, 15.0, FragPos.y); 
+    
+    // 3. 混合兩者
+    float fogFactor = max(fogDist, fogHeight * 0.8);
+    fogFactor = clamp(fogFactor, 0.0, 1.0);
+
+    // 4. 霧的顏色
+    vec3 fogColorHigh = vec3(0.05, 0.05, 0.1); // 深藍夜空
+    vec3 fogColorLow = vec3(0.2, 0.05, 0.15);  // 底部霓虹光暈
+    
+    vec3 finalFogColor = mix(fogColorHigh, fogColorLow, fogHeight);
+
+    // apply fog
+    vec3 finalColor = mix(lighting, finalFogColor, fogFactor);
+
+    FragColor = vec4(finalColor, 1.0);
 
     // Bloom
     float brightness = dot(lighting, vec3(0.2126, 0.7152, 0.0722));
