@@ -15,6 +15,7 @@ DeferredRenderer::DeferredRenderer(int w, int h) : width(w), height(h) {
     lightingShader->setInt("gNormal", 1);
     lightingShader->setInt("gAlbedoSpec", 2);
     lightingShader->setInt("ssao", 3);
+    lightingShader->setInt("gEmission", 4);
 }
 
 DeferredRenderer::~DeferredRenderer() {
@@ -57,10 +58,10 @@ void DeferredRenderer::BeginLightingPass(Camera& camera) {
     glActiveTexture(GL_TEXTURE0); glBindTexture(GL_TEXTURE_2D, gBuffer->gPosition);
     glActiveTexture(GL_TEXTURE1); glBindTexture(GL_TEXTURE_2D, gBuffer->gNormal);
     glActiveTexture(GL_TEXTURE2); glBindTexture(GL_TEXTURE_2D, gBuffer->gAlbedoSpec);
+    glActiveTexture(GL_TEXTURE3); glBindTexture(GL_TEXTURE_2D, ssao->GetSSAOTexture());
 
-    // ★ 綁定 SSAO 結果
-    glActiveTexture(GL_TEXTURE3);
-    glBindTexture(GL_TEXTURE_2D, ssao->GetSSAOTexture()); // 綁定模糊後的 SSAO
+    glActiveTexture(GL_TEXTURE4);
+    glBindTexture(GL_TEXTURE_2D, gBuffer->gEmission);
 
     lightingShader->setVec3("viewPos", camera.Position);
 }
