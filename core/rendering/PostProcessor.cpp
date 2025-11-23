@@ -52,7 +52,6 @@ PostProcessor::PostProcessor(int w, int h) : width(w), height(h) {
 }
 
 PostProcessor::~PostProcessor() {
-    // 這裡應該 glDeleteFramebuffers... 
     delete blurShader;
     delete finalShader;
 }
@@ -68,7 +67,7 @@ void PostProcessor::EndRender() {
 
 void PostProcessor::RenderBloom() {
     bool horizontal = true, first_iteration = true;
-    unsigned int amount = 10;
+    unsigned int amount = 5;
     blurShader->use();
 
     for (unsigned int i = 0; i < amount; i++) {
@@ -92,9 +91,7 @@ void PostProcessor::RenderFinal(float exposure) {
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, colorBuffers[0]); // Scene
     glActiveTexture(GL_TEXTURE1);
-    glBindTexture(GL_TEXTURE_2D, pingpongColorbuffers[0]); // Blurred Bright (最後一次 horizontal 為 false，所以寫入到 0 或 1，視次數而定，這裡假設 amount 是偶數)
-    // 注意：如果 amount 是 10，最後一次寫入的是 pingpongFBO[1]，所以這裡應該讀取 pingpongColorbuffers[1]
-    // 為了保險，建議用變數記錄最後一個 buffer ID
+    glBindTexture(GL_TEXTURE_2D, pingpongColorbuffers[0]); // Blurred Bright
 
     finalShader->setFloat("exposure", exposure);
     Primitives::renderQuad();

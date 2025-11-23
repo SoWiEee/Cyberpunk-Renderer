@@ -44,15 +44,15 @@ void DeferredRenderer::EndGeometryPass() {
 }
 
 void DeferredRenderer::BeginLightingPass(Camera& camera) {
-    // 1. 計算 SSAO
+    // 1. SSAO
     glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), (float)width / (float)height, 0.1f, 100.0f);
     glm::mat4 view = camera.GetViewMatrix();
 
     ssao->Compute(gBuffer->gPosition, gBuffer->gNormal, projection, view);
     ssao->Blur();
 
-    // 2. 開始原本的 Lighting Pass
-    postProcessor->BeginRender(); // 綁定 HDR FBO
+    // 2. Lighting Pass
+    postProcessor->BeginRender(); // bind HDR FBO
 
     lightingShader->use();
     glActiveTexture(GL_TEXTURE0); glBindTexture(GL_TEXTURE_2D, gBuffer->gPosition);
@@ -68,16 +68,14 @@ void DeferredRenderer::BeginLightingPass(Camera& camera) {
 
 void DeferredRenderer::EndLightingPass() {
     Primitives::renderQuad();
-    // 注意：不要在這裡解綁 FBO，因為我們還要接著畫 Forward Pass (燈泡)
 }
 
 void DeferredRenderer::BeginForwardPass(Camera& camera) {
-    // 複製深度緩衝 (從 GBuffer -> HDR FBO)
+    // copy GBuffer -> HDR FBO)
     glBindFramebuffer(GL_READ_FRAMEBUFFER, gBuffer->gBuffer);
     glBindFramebuffer(GL_DRAW_FRAMEBUFFER, postProcessor->hdrFBO);
     glBlitFramebuffer(0, 0, width, height, 0, 0, width, height, GL_DEPTH_BUFFER_BIT, GL_NEAREST);
 
-    // 切換回 HDR FBO 繼續畫
     glBindFramebuffer(GL_FRAMEBUFFER, postProcessor->hdrFBO);
 
     lightBoxShader->use();
@@ -88,7 +86,7 @@ void DeferredRenderer::BeginForwardPass(Camera& camera) {
 }
 
 void DeferredRenderer::EndForwardPass() {
-    postProcessor->EndRender(); // 解綁 FBO
+    postProcessor->EndRender(); // unbind FBO
 }
 
 void DeferredRenderer::RenderPostProcess() {
