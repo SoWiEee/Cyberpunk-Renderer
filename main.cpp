@@ -18,8 +18,8 @@ extern "C" {
 }
 
 // --- 全域變數 ---
-const unsigned int SCR_WIDTH = 1280;
-const unsigned int SCR_HEIGHT = 720;
+const unsigned int SCR_WIDTH = 1920;
+const unsigned int SCR_HEIGHT = 1080;
 
 Camera camera(glm::vec3(0.0f, 5.0f, 15.0f));
 float lastX = (float)SCR_WIDTH / 2.0;
@@ -29,7 +29,7 @@ float deltaTime = 0.0f;
 float lastFrame = 0.0f;
 
 // 光源設定
-const unsigned int NR_LIGHTS = 50;
+const unsigned int NR_LIGHTS = 200;
 std::vector<glm::vec3> lightPositions;
 std::vector<glm::vec3> lightColors;
 InstancedMesh* cityMesh;

@@ -140,6 +140,7 @@
   <ItemGroup>
     <ClCompile Include="core\Camera.cpp" />
     <ClCompile Include="core\rendering\DeferredRenderer.cpp" />
+    <ClCompile Include="core\rendering\InstancedMesh.cpp" />
     <ClCompile Include="core\rendering\PostProcessor.cpp" />
     <ClCompile Include="core\rendering\Primitives.cpp" />
     <ClCompile Include="core\rendering\SSAO.cpp" />
