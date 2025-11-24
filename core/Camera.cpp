@@ -20,7 +20,6 @@ Camera::Camera(float posX, float posY, float posZ, float upX, float upY, float u
     updateCameraVectors();
 }
 
-// 產生 LookAt 矩陣
 glm::mat4 Camera::GetViewMatrix()
 {
     return glm::lookAt(Position, Position + Front, Up);
@@ -29,7 +28,6 @@ glm::mat4 Camera::GetViewMatrix()
 // 處理鍵盤移動
 void Camera::ProcessKeyboard(Camera_Movement direction, float deltaTime)
 {
-    // 速度 = 基礎速度 * 時間差 (確保 FPS 低時移動距離不變)
     float velocity = MovementSpeed * deltaTime;
 
     if (direction == FORWARD)
@@ -41,7 +39,7 @@ void Camera::ProcessKeyboard(Camera_Movement direction, float deltaTime)
     if (direction == RIGHT)
         Position += Right * velocity;
     if (direction == UP)
-        Position += WorldUp * velocity;   // 絕對上升 (像無人機)
+        Position += WorldUp * velocity;   // 絕對上升
     if (direction == DOWN)
         Position -= WorldUp * velocity;   // 絕對下降
 }
@@ -74,21 +72,18 @@ void Camera::ProcessMouseScroll(float yoffset)
     Zoom -= (float)yoffset;
     if (Zoom < 1.0f)
         Zoom = 1.0f;
-    if (Zoom > 45.0f) // 限制最大 FOV 為 45
+    if (Zoom > 45.0f) // FOV max=45
         Zoom = 45.0f;
 }
 
-// 核心數學：歐拉角 -> 方向向量
 void Camera::updateCameraVectors()
 {
-    // 計算新的 Front 向量
     glm::vec3 front;
     front.x = cos(glm::radians(Yaw)) * cos(glm::radians(Pitch));
     front.y = sin(glm::radians(Pitch));
     front.z = sin(glm::radians(Yaw)) * cos(glm::radians(Pitch));
     Front = glm::normalize(front);
 
-    // 重新計算 Right 和 Up 向量
     Right = glm::normalize(glm::cross(Front, WorldUp));
     Up = glm::normalize(glm::cross(Right, Front));
 }
