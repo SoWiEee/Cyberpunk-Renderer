@@ -1,7 +1,7 @@
 #include "InstancedMesh.h"
 #include <cstddef>
 
-// ©w¸q¼Ð·Ç¤è¶ô³»ÂI (Pos, Normal, UV)
+// å®šç¾©æ¨™æº–æ–¹å¡Šé ‚é»ž (Pos, Normal, UV)
 float instanceCubeVertices[] = {
     // Back face
     -0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  0.0f,  0.0f,
@@ -56,7 +56,6 @@ InstancedMesh::InstancedMesh(std::vector<glm::mat4>& models) {
 
     glBindVertexArray(VAO);
 
-    // 1. ³]©w¤è¶ô´X¦ó¸ê®Æ
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
     glBufferData(GL_ARRAY_BUFFER, sizeof(instanceCubeVertices), instanceCubeVertices, GL_STATIC_DRAW);
 
@@ -70,13 +69,12 @@ InstancedMesh::InstancedMesh(std::vector<glm::mat4>& models) {
     glEnableVertexAttribArray(2);
     glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(6 * sizeof(float)));
 
-    // 2. ³]©w Instance Matrix (³o·|¦û¥Î Location 3, 4, 5, 6)
+    // 2. Instance Matrix (Location 3, 4, 5, 6)
     glBindBuffer(GL_ARRAY_BUFFER, instanceVBO);
     glBufferData(GL_ARRAY_BUFFER, amount * sizeof(glm::mat4), &models[0], GL_STATIC_DRAW);
 
     std::size_t vec4Size = sizeof(glm::vec4);
 
-    // ¯x°}»Ý­n©î¦¨ 4 ­Ó vec4 ¶Ç¤J
     glEnableVertexAttribArray(3);
     glVertexAttribPointer(3, 4, GL_FLOAT, GL_FALSE, 4 * vec4Size, (void*)0);
     glEnableVertexAttribArray(4);
@@ -86,7 +84,6 @@ InstancedMesh::InstancedMesh(std::vector<glm::mat4>& models) {
     glEnableVertexAttribArray(6);
     glVertexAttribPointer(6, 4, GL_FLOAT, GL_FALSE, 4 * vec4Size, (void*)(3 * vec4Size));
 
-    // ÃöÁä¡G§i¶D OpenGL ³o¨ÇÄÝ©Ê¬O¨C­Ó Instance §ó·s¤@¦¸¡A¦Ó¤£¬O¨C­Ó Vertex
     glVertexAttribDivisor(3, 1);
     glVertexAttribDivisor(4, 1);
     glVertexAttribDivisor(5, 1);
@@ -103,7 +100,6 @@ InstancedMesh::~InstancedMesh() {
 
 void InstancedMesh::Draw() {
     glBindVertexArray(VAO);
-    // ¡¹ ¤@¦¸µe¥X©Ò¦³¤j¼Ó¡I
     glDrawArraysInstanced(GL_TRIANGLES, 0, 36, amount);
     glBindVertexArray(0);
 }
