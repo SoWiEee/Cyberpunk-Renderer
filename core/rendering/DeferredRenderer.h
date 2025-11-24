@@ -17,6 +17,7 @@ public:
     SSAO* ssao;
 
     int width, height;
+    unsigned int buildingNormalMap;
 
     DeferredRenderer(int w, int h);
     ~DeferredRenderer();
@@ -32,4 +33,5 @@ public:
     void EndForwardPass();
 
     void RenderPostProcess(); // Bloom + Tone Mapping
+    unsigned int loadTexture(char const* path);
 };
