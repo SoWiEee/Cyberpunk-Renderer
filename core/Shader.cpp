@@ -105,6 +105,10 @@ void Shader::setMat4(const std::string& name, const float* value) const { glUnif
 void Shader::setVec3(const std::string& name, const glm::vec3& value) const {
     glProgramUniform3fv(ID, glGetUniformLocation(ID, name.c_str()), 1, &value[0]);
 }
+void Shader::setVec2(const std::string& name, const glm::vec2& value) const {
+    glProgramUniform2fv(ID, glGetUniformLocation(ID, name.c_str()), 1, &value[0]);
+}
+
 
 void Shader::checkCompileErrors(unsigned int shader, std::string type)
 {
