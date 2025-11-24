@@ -33,35 +33,68 @@ void main()
     // read SSAO (0.0 ~ 1.0)
     float AmbientOcclusion = texture(ssao, TexCoords).r;
 
-    // Skybox Fix
+    float fragDist = length(FragPos - viewPos);
     if (length(Normal) < 0.1) {
-        discard;
+        fragDist = 1000.0; // 視為超遠距離
     }
 
     // apply SSAO
     vec3 ambient = vec3(0.1 * Diffuse * AmbientOcclusion);
     vec3 lighting = ambient; 
     
-    vec3 viewDir  = normalize(viewPos - FragPos);
+    vec3 viewDir = normalize(FragPos - viewPos); // 視線方向
+    vec3 volumetricFog = vec3(0.0);
 
     for(int i = 0; i < NR_LIGHTS; ++i)
     {
-        float distance = length(lights[i].Position - FragPos);
-        if(distance > 15.0) continue; 
+        float lightDist = length(lights[i].Position - viewPos);
 
-        vec3 lightDir = normalize(lights[i].Position - FragPos);
-        vec3 diffuse = max(dot(Normal, lightDir), 0.0) * Diffuse * lights[i].Color;
+        float physDist = length(lights[i].Position - FragPos);
+        if(length(Normal) > 0.1 && physDist < 15.0) {
+            float distance = length(lights[i].Position - FragPos);
+            if(distance > 15.0) continue; 
+
+            vec3 lightDir = normalize(lights[i].Position - FragPos);
+            vec3 diffuse = max(dot(Normal, lightDir), 0.0) * Diffuse * lights[i].Color;
         
-        vec3 halfwayDir = normalize(lightDir + viewDir);  
-        float spec = pow(max(dot(Normal, halfwayDir), 0.0), 16.0);
-        vec3 specular = lights[i].Color * spec * Specular;
+            vec3 halfwayDir = normalize(lightDir + viewDir);  
+            float spec = pow(max(dot(Normal, halfwayDir), 0.0), 16.0);
+            vec3 specular = lights[i].Color * spec * Specular;
         
-        float attenuation = 1.0 / (1.0 + lights[i].Linear * distance + lights[i].Quadratic * distance * distance);
+            float attenuation = 1.0 / (1.0 + lights[i].Linear * distance + lights[i].Quadratic * distance * distance);
         
-        lighting += (diffuse + specular) * attenuation;
+            lighting += (diffuse + specular) * attenuation;
+        }
+        // --- ★★★ 新增：體積光散射 (Volumetric Scattering) ★★★ ---
+        
+        // 條件：光源必須在「像素」的前面 (不能被牆壁擋住)
+        if (lightDist < fragDist) 
+        {
+            // 計算視線與「相機-光源向量」的夾角
+            vec3 lightToCamDir = normalize(lights[i].Position - viewPos);
+            float cosTheta = dot(viewDir, lightToCamDir);
+            
+            // 我們只關心「看向光源」的情況 (夾角小 -> cosTheta 接近 1)
+            if (cosTheta > 0.0) 
+            {
+                // 控制光暈的大小 (數值越大，光暈越集中/越小)
+                float haloFalloff = 200.0; 
+                
+                // 模擬 Mie Scattering (米氏散射)：中心極亮，邊緣迅速衰減
+                float scattering = pow(cosTheta, haloFalloff);
+                
+                // 距離衰減：越遠的燈，光暈越弱
+                scattering *= 1.0 / (1.0 + lightDist * 0.2);
+                
+                // 疊加顏色 (乘上霧的密度係數，例如 0.5)
+                volumetricFog += lights[i].Color * scattering * 0.5;
+            }
+        }
+        
     }
 
     lighting += Emission;
+    lighting += volumetricFog;
 
     // --- 賽博龐克霧氣 ---
     float dist = length(viewPos - FragPos);
@@ -77,6 +110,7 @@ void main()
     vec3 finalFogColor = mix(fogColorHigh, fogColorLow, fogHeight);
 
     // apply fog
+
     vec3 finalColor = mix(lighting, finalFogColor, fogFactor);
 
     FragColor = vec4(finalColor, 1.0);
