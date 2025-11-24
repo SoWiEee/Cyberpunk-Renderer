@@ -93,6 +93,20 @@ void main()
         
     }
 
+    // --- 月光 (Directional Light) ---
+    vec3 moonDir = normalize(vec3(0.5, 1.0, 0.3)); // 月亮方向
+    vec3 moonColor = vec3(0.05, 0.05, 0.15);       // 冷藍色
+    
+    float diff = max(dot(Normal, moonDir), 0.0);
+    vec3 moonDiffuse = diff * moonColor * Diffuse;
+    
+    // 月光的高光 (讓潮濕地面反光)
+    vec3 halfwayDir = normalize(moonDir + viewDir);
+    float spec = pow(max(dot(Normal, halfwayDir), 0.0), 32.0);
+    vec3 moonSpecular = moonColor * spec * Specular; // 記得要乘 Specular map (地面是濕的)
+
+    lighting += moonDiffuse + moonSpecular;
+
     lighting += Emission;
     lighting += volumetricFog;
 
