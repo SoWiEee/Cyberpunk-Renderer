@@ -29,15 +29,24 @@ void main()
     vec3 Diffuse = texture(gAlbedoSpec, TexCoords).rgb;
     float Specular = texture(gAlbedoSpec, TexCoords).a;
     vec3 Emission = texture(gEmission, TexCoords).rgb;
+    
+    // read SSAO (0.0 ~ 1.0)
+    float AmbientOcclusion = texture(ssao, TexCoords).r;
 
-    // Ambient + Diffuse + Specular
-    vec3 lighting = Diffuse * 0.1; // Ambient
+    // Skybox Fix
+    if (length(Normal) < 0.1) {
+        discard;
+    }
+
+    // apply SSAO
+    vec3 ambient = vec3(0.1 * Diffuse * AmbientOcclusion);
+    vec3 lighting = ambient; 
+    
     vec3 viewDir  = normalize(viewPos - FragPos);
 
     for(int i = 0; i < NR_LIGHTS; ++i)
     {
         float distance = length(lights[i].Position - FragPos);
-        // 太遠的燈不計算
         if(distance > 15.0) continue; 
 
         vec3 lightDir = normalize(lights[i].Position - FragPos);
@@ -54,22 +63,16 @@ void main()
 
     lighting += Emission;
 
-    // 賽博龐克霧氣
-    // 1. 越遠越霧
+    // --- 賽博龐克霧氣 ---
     float dist = length(viewPos - FragPos);
-    float fogDist = 1.0 - exp(-dist * 0.015); // 調整 0.015 控制濃淡
-
-    // 2. 越低越霧
-    // 假設地面是 y=0，我們希望霧氣集中在 y=5 以下
-    float fogHeight = 1.0 - smoothstep(0.0, 15.0, FragPos.y); 
+    float fogDist = 1.0 - exp(-dist * 0.015);
+    float fogHeight = 1.0 - smoothstep(0.0, 6.0, FragPos.y);
     
-    // 3. 混合兩者
     float fogFactor = max(fogDist, fogHeight * 0.8);
     fogFactor = clamp(fogFactor, 0.0, 1.0);
 
-    // 4. 霧的顏色
-    vec3 fogColorHigh = vec3(0.05, 0.05, 0.1); // 深藍夜空
-    vec3 fogColorLow = vec3(0.2, 0.05, 0.15);  // 底部霓虹光暈
+    vec3 fogColorHigh = vec3(0.05, 0.05, 0.1);
+    vec3 fogColorLow = vec3(0.2, 0.05, 0.15);
     
     vec3 finalFogColor = mix(fogColorHigh, fogColorLow, fogHeight);
 
@@ -82,7 +85,7 @@ void main()
     float brightness = dot(lighting, vec3(0.2126, 0.7152, 0.0722));
     float threshold = 1.4;
     if(brightness > threshold)
-        BrightColor = vec4(lighting, 1.0);
+        BrightColor = vec4(finalColor, 1.0);
     else
         BrightColor = vec4(0.0, 0.0, 0.0, 1.0);
 }
