@@ -12,6 +12,7 @@
 #include "core/rendering/DeferredRenderer.h"
 #include "core/rendering/Primitives.h"
 #include "core/rendering/InstancedMesh.h"
+#include "core/rendering/SkyboxRenderer.h"
 
 extern "C" {
     __declspec(dllexport) unsigned long NvOptimusEnablement = 0x00000001;
@@ -33,6 +34,7 @@ const unsigned int NR_LIGHTS = 200;
 std::vector<glm::vec3> lightPositions;
 std::vector<glm::vec3> lightColors;
 InstancedMesh* cityMesh;
+SkyboxRenderer* skybox;
 
 // Callback 宣告
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
@@ -48,7 +50,7 @@ int main()
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 5);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
-    GLFWwindow* window = glfwCreateWindow(SCR_WIDTH, SCR_HEIGHT, "Deferred Shading - GBuffer Debug", NULL, NULL);
+    GLFWwindow* window = glfwCreateWindow(SCR_WIDTH, SCR_HEIGHT, "Cyberpunk Rendering", NULL, NULL);
     if (window == NULL) {
         std::cout << "Failed to create GLFW window" << std::endl;
         glfwTerminate();
@@ -72,6 +74,7 @@ int main()
 
 	// Create Deferred Renderer
     DeferredRenderer renderer(SCR_WIDTH, SCR_HEIGHT);
+    skybox = new SkyboxRenderer();
 
     std::vector<glm::mat4> cityModels;
     int CITY_SIZE = 20; // 20x20 的街區
@@ -109,15 +112,12 @@ int main()
     lightPositions.clear();
     lightColors.clear();
 
-    // ==========================================
     // 2. 生成賽博龐克光源
-    // ==========================================
     lightPositions.clear();
     lightColors.clear();
 
     for (unsigned int i = 0; i < NR_LIGHTS; i++)
     {
-        // 隨機顏色：青色(Cyan)、洋紅(Magenta)、紫色
         glm::vec3 color;
         int type = rand() % 3;
         if (type == 0) color = glm::vec3(0.0f, 1.0f, 1.0f); // Cyan
@@ -187,6 +187,7 @@ int main()
 
             Primitives::renderCube();
         }
+        skybox->Draw(camera);
         renderer.EndForwardPass();
 
         // --- Phase 4: Post Process ---
