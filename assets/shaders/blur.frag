@@ -3,15 +3,15 @@ out vec4 FragColor;
 in vec2 TexCoords;
 
 uniform sampler2D image;
-uniform bool horizontal; // 控制是水平模糊還是垂直模糊
+uniform bool horizontal;
 
-// 高斯權重 (5-tap)
+// Gaussian weight (5-tap)
 uniform float weight[5] = float[] (0.227027, 0.1945946, 0.1216216, 0.054054, 0.016216);
 
 void main()
 {             
-    vec2 tex_offset = 1.0 / textureSize(image, 0); // 一個像素的大小
-    vec3 result = texture(image, TexCoords).rgb * weight[0]; // 當前像素
+    vec2 tex_offset = 1.0 / textureSize(image, 0);              // pixel size
+    vec3 result = texture(image, TexCoords).rgb * weight[0];    // current pixel
 
     if(horizontal)
     {
