@@ -22,6 +22,37 @@ const int NR_LIGHTS = 100;
 uniform Light lights[NR_LIGHTS];
 uniform vec3 viewPos;
 
+// --- 賽博龐克體積霧參數 ---
+const float FOG_DENSITY = 0.04;
+const float FOG_HEIGHT_FALLOFF = 0.25;
+const float FOG_HEIGHT_OFFSET = -1.0;
+
+// 計算霧的積分密度
+float ComputeFogIntegral(vec3 camPos, vec3 worldPos) {
+    vec3 camToPoint = worldPos - camPos;
+    float distance = length(camToPoint);
+    float heightDiff = worldPos.y - camPos.y;
+    
+    if (abs(heightDiff) < 0.0001) heightDiff = 0.0001;
+
+    float num = FOG_DENSITY * distance;
+    float den = heightDiff * FOG_HEIGHT_FALLOFF;
+    
+    float valA = exp(-((camPos.y - FOG_HEIGHT_OFFSET) * FOG_HEIGHT_FALLOFF));
+    float valB = exp(-((worldPos.y - FOG_HEIGHT_OFFSET) * FOG_HEIGHT_FALLOFF));
+    
+    float fogAmount = (num / den) * (valA - valB);
+    return max(fogAmount, 0.0);
+}
+
+// 計算霧的顏色
+vec3 ComputeFogColor(vec3 viewDir, vec3 moonDir, vec3 baseFogColor) {
+    float sunAmount = max(dot(viewDir, moonDir), 0.0);
+    vec3 fogHighlightColor = vec3(0.6, 0.7, 0.9); 
+    float scatterPower = pow(sunAmount, 8.0); 
+    return mix(baseFogColor, fogHighlightColor, scatterPower * 0.5);
+}
+
 void main()
 {
     vec3 FragPos = texture(gPosition, TexCoords).rgb;
@@ -30,108 +61,112 @@ void main()
     float Specular = texture(gAlbedoSpec, TexCoords).a;
     vec3 Emission = texture(gEmission, TexCoords).rgb;
     
-    // read SSAO (0.0 ~ 1.0)
     float AmbientOcclusion = texture(ssao, TexCoords).r;
 
+    // ★★★ 修正 1: 移除 discard，改為判斷是否為幾何體 ★★★
+    bool isGeometry = length(Normal) > 0.1;
+
+    // 處理深度：如果是天空，深度設為無限遠，讓霧氣能計算
     float fragDist = length(FragPos - viewPos);
-    if (length(Normal) < 0.1) {
-        fragDist = 1000.0; // 視為超遠距離
+    if (!isGeometry) {
+        fragDist = 1000.0; 
     }
 
-    // apply SSAO
-    vec3 ambient = vec3(0.1 * Diffuse * AmbientOcclusion);
-    vec3 lighting = ambient; 
-    
-    vec3 viewDir = normalize(FragPos - viewPos); // 視線方向
+    // --- 光照計算 ---
+    vec3 lighting = vec3(0.0);
+
+    // 只有是幾何體時，才計算 Ambient / Diffuse / Specular
+    if (isGeometry) {
+        // 半球光照
+        vec3 skyColor = vec3(0.05, 0.05, 0.15);
+        vec3 groundColor = vec3(0.02, 0.02, 0.02);
+        float hemiFactor = Normal.y * 0.5 + 0.5;
+        vec3 ambientColor = mix(groundColor, skyColor, hemiFactor);
+        
+        vec3 ambient = ambientColor * Diffuse * AmbientOcclusion * 2.0;
+        lighting = ambient;
+    }
+
+    vec3 viewDir = normalize(FragPos - viewPos); 
     vec3 volumetricFog = vec3(0.0);
 
     for(int i = 0; i < NR_LIGHTS; ++i)
     {
         float lightDist = length(lights[i].Position - viewPos);
 
-        float physDist = length(lights[i].Position - FragPos);
-        if(length(Normal) > 0.1 && physDist < 15.0) {
+        // 1. 表面光照 (只對幾何體計算)
+        if(isGeometry) {
             float distance = length(lights[i].Position - FragPos);
-            if(distance > 15.0) continue; 
-
-            vec3 lightDir = normalize(lights[i].Position - FragPos);
-            vec3 diffuse = max(dot(Normal, lightDir), 0.0) * Diffuse * lights[i].Color;
-        
-            vec3 halfwayDir = normalize(lightDir + viewDir);  
-            float spec = pow(max(dot(Normal, halfwayDir), 0.0), 16.0);
-            vec3 specular = lights[i].Color * spec * Specular;
-        
-            float attenuation = 1.0 / (1.0 + lights[i].Linear * distance + lights[i].Quadratic * distance * distance);
-        
-            lighting += (diffuse + specular) * attenuation;
+            if(distance < 15.0) { 
+                vec3 lightDir = normalize(lights[i].Position - FragPos);
+                vec3 diffuse = max(dot(Normal, lightDir), 0.0) * Diffuse * lights[i].Color;
+                
+                vec3 halfwayDir = normalize(lightDir + viewDir);  
+                float spec = pow(max(dot(Normal, halfwayDir), 0.0), 16.0);
+                vec3 specular = lights[i].Color * spec * Specular;
+                
+                float attenuation = 1.0 / (1.0 + lights[i].Linear * distance + lights[i].Quadratic * distance * distance);
+                
+                lighting += (diffuse + specular) * attenuation;
+            }
         }
-        // --- ★★★ 新增：體積光散射 (Volumetric Scattering) ★★★ ---
-        
-        // 條件：光源必須在「像素」的前面 (不能被牆壁擋住)
+
+        // 2. 體積光散射
         if (lightDist < fragDist) 
         {
-            // 計算視線與「相機-光源向量」的夾角
             vec3 lightToCamDir = normalize(lights[i].Position - viewPos);
             float cosTheta = dot(viewDir, lightToCamDir);
             
-            // 我們只關心「看向光源」的情況 (夾角小 -> cosTheta 接近 1)
             if (cosTheta > 0.0) 
             {
-                // 控制光暈的大小 (數值越大，光暈越集中/越小)
-                float haloFalloff = 200.0; 
-                
-                // 模擬 Mie Scattering (米氏散射)：中心極亮，邊緣迅速衰減
+                float haloFalloff = 100.0;
                 float scattering = pow(cosTheta, haloFalloff);
-                
-                // 距離衰減：越遠的燈，光暈越弱
                 scattering *= 1.0 / (1.0 + lightDist * 0.2);
-                
-                // 疊加顏色 (乘上霧的密度係數，例如 0.5)
-                volumetricFog += lights[i].Color * scattering * 0.5;
+                volumetricFog += lights[i].Color * scattering * 1.0;
             }
         }
-        
     }
 
-    // --- 月光 (Directional Light) ---
-    vec3 moonDir = normalize(vec3(0.5, 1.0, 0.3)); // 月亮方向
-    vec3 moonColor = vec3(0.05, 0.05, 0.15);       // 冷藍色
-    
-    float diff = max(dot(Normal, moonDir), 0.0);
-    vec3 moonDiffuse = diff * moonColor * Diffuse;
-    
-    // 月光的高光 (讓潮濕地面反光)
-    vec3 halfwayDir = normalize(moonDir + viewDir);
-    float spec = pow(max(dot(Normal, halfwayDir), 0.0), 32.0);
-    vec3 moonSpecular = moonColor * spec * Specular; // 記得要乘 Specular map (地面是濕的)
+    // 月光
+    // 只照亮幾何體
+    vec3 moonDir = normalize(vec3(0.5, 1.0, 0.3)); 
+    if (isGeometry) {
+        vec3 moonColor = vec3(0.05, 0.05, 0.15);       
+        float diff = max(dot(Normal, moonDir), 0.0);
+        vec3 moonDiffuse = diff * moonColor * Diffuse;
+        
+        vec3 halfwayDir = normalize(moonDir + viewDir);
+        float spec = pow(max(dot(Normal, halfwayDir), 0.0), 32.0);
+        vec3 moonSpecular = moonColor * spec * Specular; 
 
-    lighting += moonDiffuse + moonSpecular;
+        lighting += moonDiffuse + moonSpecular;
+        lighting += Emission; // 自發光也只加在幾何體上
+    }
 
-    lighting += Emission;
-    lighting += volumetricFog;
+    // 疊加體積光 (幾何體上+天空)
+    lighting += volumetricFog; 
 
-    // --- 賽博龐克霧氣 ---
-    float dist = length(viewPos - FragPos);
-    float fogDist = 1.0 - exp(-dist * 0.015);
-    float fogHeight = 1.0 - smoothstep(0.0, 6.0, FragPos.y);
-    
-    float fogFactor = max(fogDist, fogHeight * 0.8);
-    fogFactor = clamp(fogFactor, 0.0, 1.0);
+    // Global Volumetric Fog
 
-    vec3 fogColorHigh = vec3(0.05, 0.05, 0.1);
-    vec3 fogColorLow = vec3(0.2, 0.05, 0.15);
-    
-    vec3 finalFogColor = mix(fogColorHigh, fogColorLow, fogHeight);
+    vec3 fogTargetPos = FragPos;
+    if (!isGeometry) {
+        // 天空：假裝在遠處
+        fogTargetPos = viewPos + normalize(FragPos - viewPos) * 500.0;
+    }
 
-    // apply fog
+    float fogIntegral = ComputeFogIntegral(viewPos, fogTargetPos);
+    float fogTransmittance = exp(-fogIntegral);
 
-    vec3 finalColor = mix(lighting, finalFogColor, fogFactor);
+    vec3 baseFogColor = vec3(0.15, 0.05, 0.2); 
+    vec3 finalFogColor = ComputeFogColor(viewDir, moonDir, baseFogColor);
+
+    vec3 finalColor = mix(finalFogColor, lighting, fogTransmittance);
 
     FragColor = vec4(finalColor, 1.0);
 
     // Bloom
-    float brightness = dot(lighting, vec3(0.2126, 0.7152, 0.0722));
-    float threshold = 1.4;
+    float brightness = dot(finalColor, vec3(0.2126, 0.7152, 0.0722));
+    float threshold = 2.0; 
     if(brightness > threshold)
         BrightColor = vec4(finalColor, 1.0);
     else
