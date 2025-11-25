@@ -22,12 +22,11 @@ const int NR_LIGHTS = 100;
 uniform Light lights[NR_LIGHTS];
 uniform vec3 viewPos;
 
-// --- �ɳ��e�J��n���Ѽ� ---
+// volumetric fog params
 const float FOG_DENSITY = 0.04;
 const float FOG_HEIGHT_FALLOFF = 0.25;
 const float FOG_HEIGHT_OFFSET = -1.0;
 
-// �p�������n���K��
 float ComputeFogIntegral(vec3 camPos, vec3 worldPos) {
     vec3 camToPoint = worldPos - camPos;
     float distance = length(camToPoint);
@@ -45,7 +44,6 @@ float ComputeFogIntegral(vec3 camPos, vec3 worldPos) {
     return max(fogAmount, 0.0);
 }
 
-// �p�������C��
 vec3 ComputeFogColor(vec3 viewDir, vec3 moonDir, vec3 baseFogColor) {
     float sunAmount = max(dot(viewDir, moonDir), 0.0);
     vec3 fogHighlightColor = vec3(0.6, 0.7, 0.9); 
@@ -65,7 +63,6 @@ void main()
 
     bool isGeometry = length(Normal) > 0.1;
 
-    // �B�z�`�סG�p�G�O�ѪšA�`�׳]���L�����A�������p��
     float fragDist = length(FragPos - viewPos);
     if (!isGeometry) {
         fragDist = 1000.0; 
@@ -75,7 +72,6 @@ void main()
 
     // calculate ambient/diffuse/specular
     if (isGeometry) {
-        // �b�y����
         vec3 skyColor = vec3(0.05, 0.05, 0.15);
         vec3 groundColor = vec3(0.02, 0.02, 0.02);
         float hemiFactor = Normal.y * 0.5 + 0.5;
@@ -92,7 +88,7 @@ void main()
     {
         float lightDist = length(lights[i].Position - viewPos);
 
-        // 1. �������� (�u��X����p��)
+        // suface illu
         if(isGeometry) {
             float distance = length(lights[i].Position - FragPos);
             if(distance < 15.0) { 
@@ -109,7 +105,7 @@ void main()
             }
         }
 
-        // 2. ��n�����g
+        // Volumetric Scattering
         if (lightDist < fragDist) 
         {
             vec3 lightToCamDir = normalize(lights[i].Position - viewPos);
@@ -125,8 +121,7 @@ void main()
         }
     }
 
-    // ���
-    // �u�ӫG�X����
+    // moon lighting
     vec3 moonDir = normalize(vec3(0.5, 1.0, 0.3)); 
     if (isGeometry) {
         vec3 moonColor = vec3(0.05, 0.05, 0.15);       
@@ -144,11 +139,9 @@ void main()
     lighting += volumetricFog; 
 
     // Global Volumetric Fog
-
     vec3 fogTargetPos = FragPos;
     if (!isGeometry) {
-        // �ѪšG���˦b���B
-        fogTargetPos = viewPos + normalize(FragPos - viewPos) * 500.0;
+        fogTargetPos = viewPos + normalize(FragPos - viewPos) * 500.0;  // very far sky
     }
 
     float fogIntegral = ComputeFogIntegral(viewPos, fogTargetPos);

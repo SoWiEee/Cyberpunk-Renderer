@@ -8,6 +8,5 @@ out vec2 TexCoords;
 void main()
 {
     TexCoords = aTexCoords;
-    // 繪製一個蓋滿螢幕的 Quad
     gl_Position = vec4(aPos, 1.0);
 }
