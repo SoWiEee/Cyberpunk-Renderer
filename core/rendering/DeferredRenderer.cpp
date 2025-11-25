@@ -132,5 +132,6 @@ void DeferredRenderer::EndForwardPass() {
 
 void DeferredRenderer::RenderPostProcess() {
     postProcessor->RenderBloom();
+    postProcessor->finalShader->setFloat("uTime", (float)glfwGetTime());
     postProcessor->RenderFinal(1.0f);
 }
