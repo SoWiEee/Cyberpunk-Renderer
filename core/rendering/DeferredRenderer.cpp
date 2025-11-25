@@ -72,6 +72,7 @@ void DeferredRenderer::BeginLightingPass(Camera& camera) {
     glBindTexture(GL_TEXTURE_2D, gBuffer->gEmission);
 
     lightingShader->setVec3("viewPos", camera.Position);
+    lightingShader->setFloat("uTime", glfwGetTime());
 }
 
 unsigned int DeferredRenderer::loadTexture(char const* path) {
@@ -90,10 +91,10 @@ unsigned int DeferredRenderer::loadTexture(char const* path) {
         glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0, format, GL_UNSIGNED_BYTE, data);
         glGenerateMipmap(GL_TEXTURE_2D);
 
-        // 法線貼圖一定要用 Repeat
+        // 嚙糊嚙線嚙皺嚙誕一嚙緩嚙緯嚙踝蕭 Repeat
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-        // 縮小時使用三線性過濾，避免閃爍
+        // 嚙磐嚙緘嚙褕使用三嚙線嚙褊過嚙緻嚙璀嚙論免嚙緹嚙緹
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 

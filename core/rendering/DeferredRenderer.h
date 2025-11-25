@@ -4,6 +4,7 @@
 #include "../Shader.h"
 #include "../Camera.h"
 #include "SSAO.h"
+#include <GLFW/glfw3.h>
 
 class DeferredRenderer {
 public:
@@ -22,14 +23,14 @@ public:
     DeferredRenderer(int w, int h);
     ~DeferredRenderer();
 
-    // 流程控制 API
+    // 嚙緙嚙緹嚙踝蕭嚙踝蕭 API
     void BeginGeometryPass(Camera& camera);
     void EndGeometryPass();
 
-    void BeginLightingPass(Camera& camera); // 會自動切換到 HDR FBO
-    void EndLightingPass(); // 畫 Quad，結束光照計算
+    void BeginLightingPass(Camera& camera);
+    void EndLightingPass();
 
-    void BeginForwardPass(Camera& camera); // 複製深度，準備畫燈泡
+    void BeginForwardPass(Camera& camera);
     void EndForwardPass();
 
     void RenderPostProcess(); // Bloom + Tone Mapping
