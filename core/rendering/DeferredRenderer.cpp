@@ -72,7 +72,7 @@ void DeferredRenderer::BeginLightingPass(Camera& camera) {
     glBindTexture(GL_TEXTURE_2D, gBuffer->gEmission);
 
     lightingShader->setVec3("viewPos", camera.Position);
-    lightingShader->setFloat("uTime", glfwGetTime());
+    lightingShader->setFloat("uTime", (float)glfwGetTime());
 }
 
 unsigned int DeferredRenderer::loadTexture(char const* path) {

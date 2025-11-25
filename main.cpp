@@ -30,7 +30,7 @@ float deltaTime = 0.0f;
 float lastFrame = 0.0f;
 
 // �����]�w
-const unsigned int NR_LIGHTS = 200;
+const unsigned int NR_LIGHTS = 100;
 std::vector<glm::vec3> lightPositions;
 std::vector<glm::vec3> lightColors;
 InstancedMesh* cityMesh;
@@ -121,7 +121,7 @@ int main()
         else if (type == 1) color = glm::vec3(1.0f, 0.0f, 1.0f); // Magenta
         else color = glm::vec3(0.5f, 0.0f, 1.0f); // Purple
 
-        lightColors.push_back(color * 10.0f);
+        lightColors.push_back(color * 20.0f);
         lightPositions.push_back(glm::vec3(0.0f));
     }
 
