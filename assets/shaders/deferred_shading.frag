@@ -22,12 +22,12 @@ const int NR_LIGHTS = 100;
 uniform Light lights[NR_LIGHTS];
 uniform vec3 viewPos;
 
-// --- ÁÉ³ÕÃe§JÅé¿nÃú°Ñ¼Æ ---
+// --- ï¿½É³ï¿½ï¿½eï¿½Jï¿½ï¿½nï¿½ï¿½ï¿½Ñ¼ï¿½ ---
 const float FOG_DENSITY = 0.04;
 const float FOG_HEIGHT_FALLOFF = 0.25;
 const float FOG_HEIGHT_OFFSET = -1.0;
 
-// ­pºâÃúªº¿n¤À±K«×
+// ï¿½pï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½nï¿½ï¿½ï¿½Kï¿½ï¿½
 float ComputeFogIntegral(vec3 camPos, vec3 worldPos) {
     vec3 camToPoint = worldPos - camPos;
     float distance = length(camToPoint);
@@ -45,7 +45,7 @@ float ComputeFogIntegral(vec3 camPos, vec3 worldPos) {
     return max(fogAmount, 0.0);
 }
 
-// ­pºâÃúªºÃC¦â
+// ï¿½pï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Cï¿½ï¿½
 vec3 ComputeFogColor(vec3 viewDir, vec3 moonDir, vec3 baseFogColor) {
     float sunAmount = max(dot(viewDir, moonDir), 0.0);
     vec3 fogHighlightColor = vec3(0.6, 0.7, 0.9); 
@@ -63,21 +63,19 @@ void main()
     
     float AmbientOcclusion = texture(ssao, TexCoords).r;
 
-    // ¡¹¡¹¡¹ ­×¥¿ 1: ²¾°£ discard¡A§ï¬°§PÂ_¬O§_¬°´X¦óÅé ¡¹¡¹¡¹
     bool isGeometry = length(Normal) > 0.1;
 
-    // ³B²z²`«×¡G¦pªG¬O¤ÑªÅ¡A²`«×³]¬°µL­­»·¡AÅýÃú®ð¯à­pºâ
+    // ï¿½Bï¿½zï¿½`ï¿½×¡Gï¿½pï¿½Gï¿½Oï¿½ÑªÅ¡Aï¿½`ï¿½×³]ï¿½ï¿½ï¿½Lï¿½ï¿½ï¿½ï¿½ï¿½Aï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½pï¿½ï¿½
     float fragDist = length(FragPos - viewPos);
     if (!isGeometry) {
         fragDist = 1000.0; 
     }
 
-    // --- ¥ú·Ó­pºâ ---
     vec3 lighting = vec3(0.0);
 
-    // ¥u¦³¬O´X¦óÅé®É¡A¤~­pºâ Ambient / Diffuse / Specular
+    // calculate ambient/diffuse/specular
     if (isGeometry) {
-        // ¥b²y¥ú·Ó
+        // ï¿½bï¿½yï¿½ï¿½ï¿½ï¿½
         vec3 skyColor = vec3(0.05, 0.05, 0.15);
         vec3 groundColor = vec3(0.02, 0.02, 0.02);
         float hemiFactor = Normal.y * 0.5 + 0.5;
@@ -94,7 +92,7 @@ void main()
     {
         float lightDist = length(lights[i].Position - viewPos);
 
-        // 1. ªí­±¥ú·Ó (¥u¹ï´X¦óÅé­pºâ)
+        // 1. ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ (ï¿½uï¿½ï¿½Xï¿½ï¿½ï¿½ï¿½pï¿½ï¿½)
         if(isGeometry) {
             float distance = length(lights[i].Position - FragPos);
             if(distance < 15.0) { 
@@ -111,7 +109,7 @@ void main()
             }
         }
 
-        // 2. Åé¿n¥ú´²®g
+        // 2. ï¿½ï¿½nï¿½ï¿½ï¿½ï¿½ï¿½g
         if (lightDist < fragDist) 
         {
             vec3 lightToCamDir = normalize(lights[i].Position - viewPos);
@@ -127,8 +125,8 @@ void main()
         }
     }
 
-    // ¤ë¥ú
-    // ¥u·Ó«G´X¦óÅé
+    // ï¿½ï¿½ï¿½
+    // ï¿½uï¿½Ó«Gï¿½Xï¿½ï¿½ï¿½ï¿½
     vec3 moonDir = normalize(vec3(0.5, 1.0, 0.3)); 
     if (isGeometry) {
         vec3 moonColor = vec3(0.05, 0.05, 0.15);       
@@ -140,17 +138,16 @@ void main()
         vec3 moonSpecular = moonColor * spec * Specular; 
 
         lighting += moonDiffuse + moonSpecular;
-        lighting += Emission; // ¦Ûµo¥ú¤]¥u¥[¦b´X¦óÅé¤W
+        lighting += Emission;
     }
 
-    // Å|¥[Åé¿n¥ú (´X¦óÅé¤W+¤ÑªÅ)
     lighting += volumetricFog; 
 
     // Global Volumetric Fog
 
     vec3 fogTargetPos = FragPos;
     if (!isGeometry) {
-        // ¤ÑªÅ¡G°²¸Ë¦b»·³B
+        // ï¿½ÑªÅ¡Gï¿½ï¿½ï¿½Ë¦bï¿½ï¿½ï¿½B
         fogTargetPos = viewPos + normalize(FragPos - viewPos) * 500.0;
     }
 

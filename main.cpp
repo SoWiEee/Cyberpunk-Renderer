@@ -18,7 +18,7 @@ extern "C" {
     __declspec(dllexport) unsigned long NvOptimusEnablement = 0x00000001;
 }
 
-// --- 全域變數 ---
+// --- 嚙踝蕭嚙踝蕭嚙豌潘蕭 ---
 const unsigned int SCR_WIDTH = 1920;
 const unsigned int SCR_HEIGHT = 1080;
 
@@ -29,14 +29,14 @@ bool firstMouse = true;
 float deltaTime = 0.0f;
 float lastFrame = 0.0f;
 
-// 光源設定
+// 嚙踝蕭嚙踝蕭嚙稽嚙緩
 const unsigned int NR_LIGHTS = 200;
 std::vector<glm::vec3> lightPositions;
 std::vector<glm::vec3> lightColors;
 InstancedMesh* cityMesh;
 SkyboxRenderer* skybox;
 
-// Callback 宣告
+// Callback 嚙褐告
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void mouse_callback(GLFWwindow* window, double xpos, double ypos);
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
@@ -77,33 +77,30 @@ int main()
     skybox = new SkyboxRenderer();
 
     std::vector<glm::mat4> cityModels;
-    int CITY_SIZE = 20; // 20x20 的街區
-    float SPACING = 3.0f; // 建築間距
+    int CITY_SIZE = 20; // 20x20 street
+    float SPACING = 3.0f; // building spacing
 
     srand(999);
 
     for (int x = -CITY_SIZE; x < CITY_SIZE; x++) {
         for (int z = -CITY_SIZE; z < CITY_SIZE; z++) {
-            // 留出中間空地給相機
+            // camera reserved
             if (abs(x) < 2 && abs(z) < 2) continue;
 
             glm::mat4 model = glm::mat4(1.0f);
-
-            // 位置
+            
             float posX = x * SPACING;
             float posZ = z * SPACING;
 
-            // 高度隨機：大部分是矮樓，偶爾有摩天大樓
-            float height = static_cast<float>(rand() % 5 + 1); // 1~6層
-            if (rand() % 100 > 90) height *= 4.0f; // 10% 機率變超高
-            if (rand() % 100 > 95) height *= 2.0f; // 5% 機率變巨高
+            // random height
+            float height = static_cast<float>(rand() % 5 + 1);
+            if (rand() % 100 > 90) height *= 4.0f;
+            if (rand() % 100 > 95) height *= 2.0f;
 
-            // 位移：Cube 原點在中心，往上移一半高度讓它貼地 (y=0)
             model = glm::translate(model, glm::vec3(posX, height / 2.0f, posZ));
 
-            // 縮放：變成瘦長的長方體
+            // scale
             model = glm::scale(model, glm::vec3(2.0f, height, 2.0f));
-
             cityModels.push_back(model);
         }
     }
@@ -112,7 +109,7 @@ int main()
     lightPositions.clear();
     lightColors.clear();
 
-    // 2. 生成賽博龐克光源
+    // generate lights
     lightPositions.clear();
     lightColors.clear();
 
@@ -137,17 +134,17 @@ int main()
 
         processInput(window);
 
-        // 更新光源動畫 (在城市街道間穿梭)
+        // light animation
         for (unsigned int i = 0; i < lightPositions.size(); i++)
         {
             float time = currentFrame * 0.3f;
             float offset = i * 10.0f;
 
-            // 讓光在街道 (X 和 Z 軸) 上移動
+            // movement
             float x = sin(time + offset) * 40.0f;
             float z = cos(time * 0.5f + offset) * 40.0f;
 
-            // 高度在 1~10 之間浮動
+            // random height
             float y = 2.0f + sin(time * 2.0f + i) * 2.0f + 2.0f;
 
             lightPositions[i] = glm::vec3(x, y, z);
@@ -155,7 +152,7 @@ int main()
 
         // --- Phase 1: Geometry ---
         renderer.BeginGeometryPass(camera);
-        renderer.gBufferShader->setVec3("objectColor", glm::vec3(0.1f, 0.1f, 0.1f)); // 黑色大樓
+        renderer.gBufferShader->setVec3("objectColor", glm::vec3(0.1f, 0.1f, 0.1f)); // 嚙蝓佗蕭j嚙踝蕭
         cityMesh->Draw();
         renderer.EndGeometryPass();
 
@@ -183,7 +180,7 @@ int main()
             model = glm::scale(model, glm::vec3(0.1f));
 
             renderer.lightBoxShader->setMat4("model", glm::value_ptr(model));
-            renderer.lightBoxShader->setVec3("lightColor", lightColors[i]); // 讓燈泡亮一點
+            renderer.lightBoxShader->setVec3("lightColor", lightColors[i]); // 嚙踝蕭嚙瞌嚙緩嚙瘦嚙瑾嚙瘢
 
             Primitives::renderCube();
         }
@@ -201,7 +198,7 @@ int main()
     return 0;
 }
 
-// --- Callbacks ---
+// Callbacks
 
 void processInput(GLFWwindow* window) {
     if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS) glfwSetWindowShouldClose(window, true);
